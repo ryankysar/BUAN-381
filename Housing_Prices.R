@@ -6,7 +6,9 @@
 
 library(tidymodels)
 library(sqldf)
-
+library(splitTools)
+library(rpart.plot)
+library(baguette)
 
 # Import Data
 
@@ -77,32 +79,53 @@ Prices$PrefArea[Prices$PrefArea == "no"] <- 0
 
 Prices$PrefArea[Prices$PrefArea == "yes"] <- 1
 
-# Partitioning the data into Training and Testing ##
 
-p <-.7 # 70% in sample and 30% out of sample
 
-Prices_Count <- dim(Movie)[1]
+# Partitioning the data into Training, Testing, and Holdout ##
 
-Training_size <- floor(p * Prices_Count)
-
-Training_size
+#Split the data frame into partitions 
+Sets <- partition(Prices$Total_Area, p = c(train = 0.70, Hold = 0.15, test = 0.15))
+str(Sets)
 
 
 # Setting the seed so it reproduces the same results
-
 set.seed(123)
 
-Train_Prices <- sample(Prices_Count, size = Training_size) # Run 32 and 34 together
+Train <- Prices[Sets$train,]
+Hold <- Prices[Sets$Hold,]
+Test <- Prices[Sets$test,]
+
+
+dim(Train)
+dim(Hold)
+dim(Test)
+
+summary(Train$Price)
+summary(Hold$Price)
+summary(Test$Price)
 
 
 
-Training_M <- Prices[Train_Prices, ] #PULLS RANDOM ROWS FOR TRAINING
-Testing_M <- Prices[-Train_Prices, ] #PULLS RANDOM ROWS FOR TESTING
+Prices_reg <- decision_tree(min_n = 20 , #minimum number of observations for split
+              tree_depth = 30, #max tree depth
+              cost_complexity = 0.01)  %>% #regularization parameter
+  set_engine("rpart") %>%
+  set_mode("regression")
 
+print(Prices_reg)
 
-dim(Training_M)
+#Esimating the Model
 
-dim(Testing_M)
+Prices_fmla <- Price ~ .
+Prices_tree <- Prices_reg %>%
+  fit(formula = Prices_fmla, data = Prices)
+print(Prices_tree)
+
+#VISUALIZING THE REGRESSION TREE
+Prices_tree$fit %>%
+  rpart.plot(type = 2, roundint = FALSE)
+
+#change the numbers out of scientific notation
 
 
 # Univariate Model
