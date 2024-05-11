@@ -352,6 +352,18 @@ PRED_6_OUT <- predict(M6, Test, type = 'response')
 (RMSE_6_IN<-sqrt(sum((PRED_6_IN-Train$Price)^2)/length(PRED_6_IN)))  
 (RMSE_6_OUT<-sqrt(sum((PRED_6_OUT-Test$Price)^2)/length(PRED_6_OUT))) 
 
+#Apply LASSO regularization to the SPLINE Model
+Spline_Mult <- gam(Price ~ Total_Area + Bedrooms + Bathrooms + Stories + Parking_Spots, 
+                   data = Train, 
+                   family = 'gaussian',
+                   method = "REML")
+summary(Spline_Mult)
+
+PRED_Mult_Spl_IN <- predict(Spline_Mult, Train, type = 'response')
+PRED_Mult_Spl_OUT <- predict(Spline_Mult, Test, type = 'response')
+
+(RMSE_SPl_MULT_IN <- sqrt(sum((PRED_Mult_Spl_IN - Train$Price)^2) / length(PRED_Mult_Spl_IN)))  
+(RMSE_Spl_MULT_OUT <- sqrt(sum((PRED_Mult_Spl_OUT - Test$Price)^2) / length(PRED_Mult_Spl_OUT)))
 
 #Model Comparisons
 TABLE_VAL_2 <- as.table(matrix(c(RMSE_1_IN, RMSE_2_IN, RMSE_3_IN, RMSE_4_IN,RMSE_reg_IN, RMSE_5_IN, RMSE_6_IN,RMSE_reg_tune_IN, RMSE_1_OUT, RMSE_2_OUT, RMSE_3_OUT, RMSE_4_OUT, RMSE_reg_OUT, RMSE_5_OUT, RMSE_6_OUT, RMSE_reg_tune_OUT), ncol=8, byrow=TRUE))
